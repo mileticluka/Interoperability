@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <element name="Book">
+      <element name="Title">
+        <text />
+      </element>
+      <element name="Author">
+        <text />
+      </element>
+      <element name="OriginalLanguage">
+        <text />
+      </element>
+      <element name="FirstPublished">
+        <data type="int" />
+      </element>
+      <element name="ApproximateSales">
+        <data type="int" />
+      </element>
+      <element name="Genre">
+        <text />
+      </element>
+    </element>
+  </start>
+</grammar>

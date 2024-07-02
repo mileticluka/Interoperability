@@ -1,0 +1,91 @@
+﻿@page "/editbook/{id:int}"
+@using DAL.Model
+@using FRONTEND.Data.REST
+@inject RESTClient restClient
+@inject NavigationManager Navigation
+
+<h3>Edit Book</h3>
+
+@if (error != null)
+{
+    <p style="color: red;">@error</p>
+}
+
+@if (Book == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <form>
+        <div class="form-group">
+            <label for="title">Title:</label>
+            <input type="text" class="form-control" id="title" @bind="Book.Title">
+        </div>
+        <div class="form-group">
+            <label for="author">Author:</label>
+            <input type="text" class="form-control" id="author" @bind="Book.Author">
+        </div>
+        <div class="form-group">
+            <label for="originalLanguage">Original Language:</label>
+            <input type="text" class="form-control" id="originalLanguage" @bind="Book.OriginalLanguage">
+        </div>
+        <div class="form-group">
+            <label for="firstPublished">First Published:</label>
+            <input type="number" class="form-control" id="firstPublished" @bind="Book.FirstPublished">
+        </div>
+        <div class="form-group">
+            <label for="approxSales">Approximate Sales (Millions):</label>
+            <input type="number" class="form-control" id="approxSales" @bind="Book.ApproxSalesInMillions">
+        </div>
+        <div class="form-group">
+            <label for="genre">Genre:</label>
+            <input type="text" class="form-control" id="genre" @bind="Book.Genre">
+        </div>
+
+        <button type="button" class="btn btn-primary" @onclick="UpdateBook">Save Changes</button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+    </form>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Book Book;
+    private string error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Book = await restClient.GetBookByIdAsync(Id);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            error = "Unauthorized access. Please log in.";
+        }
+        catch (Exception ex)
+        {
+            error = $"Error loading book: {ex.Message}";
+        }
+    }
+
+    private async Task UpdateBook()
+    {
+        try
+        {
+            await restClient.UpdateBookAsync(Id, Book);
+            Navigation.NavigateTo($"/bookdetails/{Id}");
+        }
+        catch (Exception ex)
+        {
+            error = $"Error updating book: {ex.Message}";
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo($"/bookdetails/{Id}");
+    }
+}

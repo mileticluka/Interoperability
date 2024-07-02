@@ -1,0 +1,48 @@
+﻿@page "/register"
+@inject NavigationManager Navigation
+@using DAL.Model
+@using Data.Auth
+@inject AuthClient authClient
+
+<h3 class="mb-4">Register</h3>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+    </div>
+}
+
+<div class="mb-3">
+    <label for="newUsername" class="form-label">Username:</label>
+    <input id="newUsername" class="form-control" @bind="newUsername" />
+</div>
+
+<div class="mb-3">
+    <label for="newPassword" class="form-label">Password:</label>
+    <input id="newPassword" type="password" class="form-control" @bind="newPassword" />
+</div>
+
+<button class="btn btn-primary" @onclick="RegisterUser">Register</button>
+
+@code {
+    private string newUsername;
+    private string newPassword;
+    private string error;
+
+    private async Task RegisterUser()
+    {
+        User newUser = new User() { username = newUsername, password = newPassword };
+
+        bool success = await authClient.RegisterAsync(newUser);
+
+        if (success)
+        {
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            error = "User already exists!";
+        }
+    }
+}

@@ -1,0 +1,56 @@
+﻿@inject Blazored.LocalStorage.ILocalStorageService localStorage
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">FRONTEND</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="soapclient">
+                SOAP
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="dhmz">
+                DHMZ
+            </NavLink>
+        </div>
+        @if(isLoggedIn)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="books">
+                    BOOKS
+                </NavLink>
+            </div>
+        }
+
+    </nav>
+</div>
+
+@code{
+
+    private bool isLoggedIn;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        if (firstRender)
+        {
+            var authToken = await localStorage.GetItemAsync<string>("authToken");
+            isLoggedIn = !string.IsNullOrEmpty(authToken);
+
+
+            StateHasChanged();
+        }
+    }
+}

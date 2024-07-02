@@ -1,0 +1,68 @@
+﻿@inherits LayoutComponentBase
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject NavigationManager Navigation
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="d-flex justify-content-start align-items-center px-3">
+            @if (isLoggedIn)
+            {
+                <span class="mr-3">Hello, @username!</span>
+                <a class="nav-link mr-3" href="#" @onclick="Logout">
+                    <span class="bi bi-door-closed" aria-hidden="true"></span> Logout
+                </a>
+            }
+            else
+            {
+                <NavLink class="nav-link mr-3" href="login">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Login
+                </NavLink>
+                <NavLink class="nav-link" href="register">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Register
+                </NavLink>
+            }
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+
+@code {
+    private bool isLoggedIn;
+    private string username;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authToken = await localStorage.GetItemAsync<string>("authToken");
+            isLoggedIn = !string.IsNullOrEmpty(authToken);
+
+            if (isLoggedIn)
+            {
+                username = await localStorage.GetItemAsync<string>("username");
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task Logout()
+    {
+        await localStorage.RemoveItemAsync("authToken");
+        await localStorage.RemoveItemAsync("username");
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+}

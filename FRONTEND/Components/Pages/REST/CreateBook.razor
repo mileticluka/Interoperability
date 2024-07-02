@@ -1,0 +1,56 @@
+﻿@page "/createbook"
+@using Data.REST;
+@inject RESTClient restClient
+
+<h3>Create a New Book (XML)</h3>
+
+<div class="form-group">
+    <label for="xmlContent">XML Content:</label>
+    <textarea id="xmlContent" class="form-control" rows="10" @bind="@xmlContent"></textarea>
+    <small id="xmlContentHelp" class="form-text text-muted">Enter XML content for the new book.</small>
+</div>
+
+<div class="form-group">
+    <label for="endpoint">Endpoint Type:</label>
+    <select id="endpoint" class="form-control" @bind="@selectedEndpoint">
+        <option value="xsd">XSD</option>
+        <option value="rng">RNG</option>
+    </select>
+    <small id="endpointHelp" class="form-text text-muted">Choose the type of endpoint (XSD or RNG).</small>
+</div>
+
+<button class="btn btn-primary" @onclick="Create">Create Book</button>
+
+@if (!string.IsNullOrEmpty(result))
+{
+    <div class="alert alert-success mt-3" role="alert">
+        @result
+    </div>
+}
+
+@code {
+    private string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+    <Book>
+        <Title>Sample Title</Title>
+        <Author>Sample Author</Author>
+        <OriginalLanguage>English</OriginalLanguage>
+        <FirstPublished>1994</FirstPublished>
+        <ApproximateSales>100</ApproximateSales>
+        <Genre>Sample Genre</Genre>
+    </Book>";
+
+    private string selectedEndpoint = "xsd";
+    private string result;
+
+    private async Task Create()
+    {
+        try
+        {
+            result = await restClient.PostBookXmlAsync(xmlContent, selectedEndpoint);
+        }
+        catch (Exception ex)
+        {
+            result = $"Error: {ex.Message}";
+        }
+    }
+}

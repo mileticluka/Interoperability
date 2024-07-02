@@ -1,0 +1,141 @@
+﻿@page "/soapclient"
+@using System.Xml.Linq;
+@using System.Collections.Generic;
+@using DAL.Model
+@using FRONTEND.Data.SOAP;
+@using FRONTEND.Data.JAXB
+@inject SOAPClient bookServiceClient
+@inject JAXBClient jaxbClient
+
+<h3>SOAP Client</h3>
+
+<div>
+    <label for="searchTerm">Search Term:</label>
+    <input type="text" id="searchTerm" @bind-value="searchTerm" />
+    <button class="btn btn-primary" @onclick="SearchBooks">Search</button>
+</div>
+
+<div>
+    <label for="xmlInput">XML to Validate:</label>
+    <textarea id="xmlInput" @bind="rawXml" style="width: 100%; height: 200px;"></textarea>
+    <button class="btn btn-primary" @onclick="ValidateXml">Validate XML</button>
+</div>
+
+@if (!string.IsNullOrEmpty(searchResult))
+{
+    <h4>Search Result:</h4>
+
+    <textarea readonly style="width: 100%; height: 400px;">@rawXml</textarea>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Language</th>
+                <th>First Published</th>
+                <th>Approximate Sales</th>
+                <th>Genre</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in books)
+            {
+                <tr>
+                    <td>@book.Id</td>
+                    <td>@book.Title</td>
+                    <td>@book.Author</td>
+                    <td>@book.OriginalLanguage</td>
+                    <td>@book.FirstPublished</td>
+                    <td>@book.ApproxSalesInMillions million</td>
+                    <td>@book.Genre</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Waiting for search results...</p>
+}
+
+@if (!string.IsNullOrEmpty(validationResult))
+{
+    <h4>XML Validation Result:</h4>
+    <p>@validationResult</p>
+}
+
+@code {
+    private string searchTerm;
+    private string searchResult;
+    private string rawXml;
+    private List<Book> books;
+    private string validationResult;
+
+    private async Task SearchBooks()
+    {
+        try
+        {
+            // Clear previous results
+            books = new List<Book>();
+            rawXml = null;
+
+            searchResult = await bookServiceClient.GenerateAndSearchBooksXmlAsync(searchTerm);
+            rawXml = ExtractInnerXml(searchResult, "GenerateAndSearchBooksXmlResult");
+            books = ParseBooksFromXml(rawXml);
+
+            // Debugging output
+            Console.WriteLine($"Received SOAP response:\n{searchResult}");
+            Console.WriteLine($"Extracted XML:\n{rawXml}");
+            Console.WriteLine($"Parsed {books.Count} books.");
+        }
+        catch (Exception ex)
+        {
+            // Handle exception, e.g., log it or show an error message
+            Console.WriteLine($"Error calling SOAP service: {ex.Message}");
+            searchResult = null;
+        }
+    }
+
+    private async Task ValidateXml()
+    {
+        try
+        {
+            validationResult = await jaxbClient.ValidateXmlAsync(rawXml);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error validating XML: {ex.Message}");
+            validationResult = $"Exception occurred: {ex.Message}";
+        }
+    }
+
+    private string ExtractInnerXml(string xml, string elementName)
+    {
+        XDocument doc = XDocument.Parse(xml);
+        XElement element = doc.Descendants()
+                              .FirstOrDefault(e => e.Name.LocalName == elementName);
+
+        return element?.Value;
+    }
+
+    private List<Book> ParseBooksFromXml(string xml)
+    {
+        XDocument doc = XDocument.Parse(xml);
+
+        var books = doc.Descendants("Book")
+                       .Select(b => new Book
+                       {
+                           Id = (int)b.Element("Id"),
+                           Title = (string)b.Element("Title"),
+                           Author = (string)b.Element("Author"),
+                           OriginalLanguage = (string)b.Element("OriginalLanguage"),
+                           FirstPublished = (int)b.Element("FirstPublished"),
+                           ApproxSalesInMillions = (int)b.Element("ApproximateSales"),
+                           Genre = (string)b.Element("Genre")
+                       })
+                       .ToList();
+
+        return books;
+    }
+}

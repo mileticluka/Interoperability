@@ -1,0 +1,50 @@
+﻿@page "/login"
+@inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@using DAL.Model
+@using Data.Auth
+@inject AuthClient authClient
+
+<h3 class="mb-4">Login</h3>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger" role="alert">
+        @error
+    </div>
+}
+
+<div class="mb-3">
+    <label for="username" class="form-label">Username:</label>
+    <input id="username" class="form-control" @bind="_username" />
+</div>
+
+<div class="mb-3">
+    <label for="password" class="form-label">Password:</label>
+    <input id="password" type="password" class="form-control" @bind="_password" />
+</div>
+
+<button class="btn btn-primary" @onclick="LoginUser">Login</button>
+
+@code {
+    private string _username;
+    private string _password;
+    private string error;
+
+    private async Task LoginUser()
+    {
+        User user = new User() { username = _username, password = _password };
+
+        var response = await authClient.LoginAsync(user);
+        if (response.isSuccess)
+        {
+            await localStorage.SetItemAsync("authToken", response.Token);
+            await localStorage.SetItemAsync("username", _username);
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            error = "Login credentials incorrect!";
+        }
+    }
+}

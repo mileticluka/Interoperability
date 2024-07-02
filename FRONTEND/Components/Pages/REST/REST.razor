@@ -1,0 +1,105 @@
+﻿@page "/books"
+@using DAL.Model
+@using FRONTEND.Data.REST
+@inject NavigationManager Navigation
+
+
+@inject RESTClient restClient
+
+<h3>List of Books</h3>
+
+<button class="btn btn-primary" @onclick="() => ViewCreate()">Post Book</button>
+
+
+@if (error != null)
+{
+    <p style="color: red;">@error</p>
+}
+
+@if (books == null)
+{
+    <p>Loading...</p>
+}
+else if (books.Count() == 0)
+{
+    <p>No books available.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Genre</th>
+                <th>Approx Sales (Millions)</th>
+                <th>Original Language</th>
+                <th>First Published</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in books)
+            {
+                <tr>
+                    <td>@book.Title</td>
+                    <td>@book.Author</td>
+                    <td>@book.Genre</td>
+                    <td>@book.ApproxSalesInMillions</td>
+                    <td>@book.OriginalLanguage</td>
+                    <td>@book.FirstPublished</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => ViewBookDetails(book.Id)">Details</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="() => DeleteBook((int)book.Id)">Delete</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-warning" @onclick="() => EditBook((int)book.Id)">Update</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IEnumerable<Book> books;
+    private string error;
+
+    private void ViewCreate()
+    {
+        Navigation.NavigateTo("/createbook/");
+    }
+
+    private void ViewBookDetails(int? bookId)
+    {
+        Navigation.NavigateTo($"/bookdetails/{bookId}");
+    }
+
+    private void DeleteBook(int bookId)
+    {
+        restClient.DeleteBookAsync(bookId);
+        Navigation.NavigateTo("/books/", forceLoad: true);
+    }
+
+    private void EditBook(int bookId)
+    {
+        Navigation.NavigateTo($"/editbook/{bookId}");
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            books = await restClient.GetAllBooksAsync();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            error = "Unauthorized access. Please log in.";
+        }
+        catch (Exception ex)
+        {
+            error = $"Error loading books: {ex.Message}";
+        }
+    }
+}
